@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Particle Motion | Social Connect</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Canvas background - particle system */
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+      background: linear-gradient(135deg, #0a0f1e 0%, #0c1222 100%);
+    }
+
+    /* Content wrapper - sits above canvas */
+    .content {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* main card container (translucent to see particles) */
+    .contact-card {
+      max-width: 880px;
+      width: 100%;
+      background: rgba(15, 25, 45, 0.68);
+      backdrop-filter: blur(12px);
+      border-radius: 2.5rem;
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* decorative header */
+    .hero-section {
+      background: rgba(10, 18, 30, 0.6);
+      padding: 2rem 2rem 1.5rem 2rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .hero-section h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ffffff, #b9c8ff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: -0.3px;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-section p {
+      color: #cbd5ff;
+      font-weight: 500;
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+
+    /* button grid container */
+    .button-grid {
+      padding: 2.5rem 2rem 2.8rem 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+    }
+
+    /* stylish button base */
+    .social-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      width: 150px;
+      padding: 1.2rem 0.5rem;
+      border-radius: 2rem;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      text-decoration: none;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #f0f3ff;
+    }
+
+    /* icon styling */
+    .social-btn i {
+      font-size: 2.4rem;
+      transition: transform 0.2s;
+    }
+
+    .social-btn span {
+      font-size: 0.9rem;
+      letter-spacing: 0.3px;
+    }
+
+    /* individual brand colors (icon & subtle hover) */
+    .btn-whatsapp i { color: #25D366; }
+    .btn-whatsapp:hover { background: #25D366; border-color: #20b859; transform: translateY(-6px); box-shadow: 0 20px 25px -12px rgba(37, 211, 102, 0.4); }
+    .btn-whatsapp:hover i, .btn-whatsapp:hover span { color: white; }
+
+    .btn-messenger i { color: #0084ff; }
+    .btn-messenger:hover { background: #0084ff; border-color: #0070e0; transform: translateY(-6px); box-shadow: 0 20px 25px -12px rgba(0, 132, 255, 0.4); }
+    .btn-messenger:hover i, .btn-messenger:hover span { color: white; }
+
+    .btn-call i { color: #34C759; }
+    .btn-call:hover { background: #34C759; border-color: #2da84d; transform: translateY(-6px); box-shadow: 0 20px 25px -12px rgba(52, 199, 89, 0.4); }
+    .btn-call:hover i, .btn-call:hover span { color: white; }
+
+    .btn-facebook i { color: #1877F2; }
+    .btn-facebook:hover { background: #1877F2; border-color: #1462c7; transform: translateY(-6px); box-shadow: 0 20px 25px -12px rgba(24, 119, 242, 0.4); }
+    .btn-facebook:hover i, .btn-facebook:hover span { color: white; }
+
+    .btn-email i { color: #EA4335; }
+    .btn-email:hover { background: #EA4335; border-color: #d33a2c; transform: translateY(-6px); box-shadow: 0 20px 25px -12px rgba(234, 67, 53, 0.4); }
+    .btn-email:hover i, .btn-email:hover span { color: white; }
+
+    .social-btn:active {
+      transform: translateY(-2px);
+    }
+
+    /* responsive */
+    @media (max-width: 640px) {
+      .button-grid { gap: 1rem; padding: 1.8rem 1.2rem; }
+      .social-btn { width: 125px; padding: 1rem 0.3rem; }
+      .social-btn i { font-size: 2rem; }
+      .hero-section h1 { font-size: 1.7rem; }
+    }
+    @media (max-width: 480px) {
+      .social-btn { width: 105px; }
+      .social-btn span { font-size: 0.75rem; }
+    }
+
+    .toast-msg {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.9);
+      background: #0a0f1ee6;
+      backdrop-filter: blur(12px);
+      color: white;
+      padding: 0.7rem 1.8rem;
+      border-radius: 60px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      font-family: monospace;
+      letter-spacing: 0.3px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast-msg.show { opacity: 1; transform: translateX(-50%) scale(1); }
+
+    footer {
+      text-align: center;
+      font-size: 0.75rem;
+      padding: 1rem 1rem 1.3rem;
+      color: #a5b4fc;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.2);
+    }
+  </style>
+  <!-- Font Awesome & Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+  <!-- CANVAS FOR PARTICLE BACKGROUND -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- UI CONTENT -->
+  <div class="content">
+    <div class="contact-card">
+      <div class="hero-section">
+        <h1><i class="fas fa-sparkle" style="font-size: 1.6rem; margin-right: 8px;"></i>Connect With Kiran</h1>
+        <p>One tap reach</p>
+      </div>
+      <div class="button-grid">
+        <button class="social-btn btn-whatsapp" id="whatsappBtn"><i class="fab fa-whatsapp"></i><span>WhatsApp</span></button>
+        <button class="social-btn btn-messenger" id="messengerBtn"><i class="fab fa-facebook-messenger"></i><span>Messenger</span></button>
+        <button class="social-btn btn-call" id="callBtn"><i class="fas fa-phone-alt"></i><span>Call</span></button>
+        <button class="social-btn btn-facebook" id="facebookBtn"><i class="fab fa-facebook-f"></i><span>Facebook</span></button>
+        <button class="social-btn btn-email" id="emailBtn"><i class="fas fa-envelope"></i><span>Email</span></button>
+      </div>
+      <footer>✨ dynamic particle field | interactive social hub</footer>
+    </div>
+  </div>
+  <div id="toastMessage" class="toast-msg">✨ launching...</div>
+
+  <script>
+    // -------------------------------
+    // PARTICLE SYSTEM - BACKGROUND MOTION
+    // -------------------------------
+    (function initParticles() {
+      const canvas = document.getElementById('particle-canvas');
+      let ctx = canvas.getContext('2d');
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      
+      // Particle settings
+      let particles = [];
+      const PARTICLE_COUNT = 180;
+      const CONNECT_DIST = 140;      // distance to draw connecting lines
+      const PARTICLE_RADIUS = 2.2;    // base radius
+      
+      // Colors: cosmic / neon theme with subtle variation
+      const colorPalette = [
+        'rgba(100, 150, 255, 0.7)',   // soft blue
+        'rgba(130, 180, 255, 0.6)',
+        'rgba(80, 200, 255, 0.65)',
+        'rgba(180, 130, 255, 0.6)',
+        'rgba(255, 120, 150, 0.5)',
+        'rgba(70, 210, 170, 0.6)'
+      ];
+      
+      class Particle {
+        constructor(x, y, vx, vy, size, color) {
+          this.x = x;
+          this.y = y;
+          this.vx = vx;
+          this.vy = vy;
+          this.size = size;
+          this.color = color;
+          this.originalSize = size;
+        }
+        
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+          
+          // wrap around edges (infinite flow)
+          if (this.x < -20) this.x = width + 20;
+          if (this.x > width + 20) this.x = -20;
+          if (this.y < -20) this.y = height + 20;
+          if (this.y > height + 20) this.y = -20;
+          
+          // subtle variation: change velocity slightly with noise for organic movement
+          if (Math.random() < 0.02) {
+            this.vx += (Math.random() - 0.5) * 0.12;
+            this.vy += (Math.random() - 0.5) * 0.12;
+            // limit speed
+            let maxSpeed = 1.2;
+            if (Math.abs(this.vx) > maxSpeed) this.vx = this.vx > 0 ? maxSpeed : -maxSpeed;
+            if (Math.abs(this.vy) > maxSpeed) this.vy = this.vy > 0 ? maxSpeed : -maxSpeed;
+          }
+          
+          // dynamic size based on speed (tiny pulse)
+          let speed = Math.hypot(this.vx, this.vy);
+          this.size = this.originalSize + speed * 0.6;
+          if (this.size > 4.2) this.size = 4.2;
+          if (this.size < 1.5) this.size = 1.5;
+        }
+        
+        draw(ctx) {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.fill();
+          // add glow effect
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = "rgba(100, 150, 255, 0.5)";
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      }
+      
+      function initParticleArray() {
+        particles = [];
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          let x = Math.random() * width;
+          let y = Math.random() * height;
+          let vx = (Math.random() - 0.5) * 0.9;
+          let vy = (Math.random() - 0.5) * 0.9;
+          let size = PARTICLE_RADIUS + Math.random() * 1.5;
+          let color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+          particles.push(new Particle(x, y, vx, vy, size, color));
+        }
+      }
+      
+      function drawConnections() {
+        // draw lines between particles that are close
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < CONNECT_DIST) {
+              // opacity based on distance
+              let opacity = (1 - distance / CONNECT_DIST) * 0.45;
+              ctx.beginPath();
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.strokeStyle = `rgba(110, 160, 255, ${opacity * 0.8})`;
+              ctx.lineWidth = 1.2;
+              ctx.stroke();
+            }
+          }
+        }
+      }
+      
+      function animateParticles() {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, width, height);
+        // draw radial gradient background for depth (but canvas already has bg via CSS, but we add extra)
+        const grad = ctx.createLinearGradient(0, 0, width*0.8, height);
+        grad.addColorStop(0, '#070b16');
+        grad.addColorStop(1, '#10172b');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+        
+        // update and draw particles
+        for (let p of particles) {
+          p.update();
+          p.draw(ctx);
+        }
+        drawConnections();
+        
+        // additional floating dust: small extra glow
+        ctx.fillStyle = "rgba(210, 220, 255, 0.2)";
+        for (let i = 0; i < particles.length/3; i++) {
+          // some extra micro specks for rich look
+          let speck = particles[i % particles.length];
+          ctx.beginPath();
+          ctx.arc(speck.x + (Math.sin(Date.now() * 0.002 + i) * 1.2), speck.y + (Math.cos(Date.now() * 0.0017 + i) * 1.2), 1.0, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(180, 200, 255, 0.25)`;
+          ctx.fill();
+        }
+        
+        requestAnimationFrame(animateParticles);
+      }
+      
+      function resizeCanvas() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        if (ctx) {
+          // re-init particles to new dimensions for better distribution
+          initParticleArray();
+        }
+      }
+      
+      // setup canvas and start
+      function setup() {
+        resizeCanvas();
+        initParticleArray();
+        animateParticles();
+        window.addEventListener('resize', () => {
+          resizeCanvas();
+        });
+      }
+      
+      setup();
+    })();
+    
+    // -------------------------------
+    // SOCIAL MEDIA ACTIONS (with toast)
+    // -------------------------------
+    // --- Replace with your personal info ---
+    const CONFIG = {
+      whatsappNumber: "+9779819346841",        // change to your number (digits only, country code)
+      messengerLink: "https://m.me/kiranthapa023",
+      callNumber: "+9779819346841",
+      facebookUrl: "https://facebook.com/kiranthapa023",
+      emailAddress: "kiran.thapa@drishtieye.org",
+      emailSubject: "Connecting To You"
+    };
+    
+    function showToast(msg, duration = 1600) {
+      const toast = document.getElementById('toastMessage');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), duration);
+    }
+    
+    function openUrl(url, toastMsg = "Opening...") {
+      if (!url || url.includes("yourusername") || url.includes("yourprofile") || url === "https://facebook.com/yourprofile" && CONFIG.facebookUrl === "https://facebook.com/yourprofile") {
+        if (url === CONFIG.messengerLink && CONFIG.messengerLink === "https://m.me/yourusername") {
+          showToast("⚙️ Set your Messenger link in config", 1500);
+          return;
+        }
+        if (url === CONFIG.facebookUrl && CONFIG.facebookUrl === "https://facebook.com/kiranthapa023") {
+          showToast("📘 Update Facebook profile URL", 1500);
+          return;
+        }
+        if (url.includes("example") || url === "mailto:kiran.thapa@drishtieye.org?subject=connect%20to%20you%20Hub") {
+          showToast("✏️ Replace demo email address", 1500);
+          return;
+        }
+      }
+      showToast(toastMsg);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+    
+    function triggerWhatsApp() {
+      let number = CONFIG.whatsappNumber.replace(/\D/g, '');
+      if (!number || number.length < 6 || number === "1234567890") {
+        showToast("📱 Set your WhatsApp number in CONFIG", 1600);
+        return;
+      }
+      openUrl(`https://wa.me/${number}`, "Opening WhatsApp...");
+    }
+    
+    function triggerMessenger() {
+      let url = CONFIG.messengerLink;
+      if (!url || url === "https://m.me/yourusername") {
+        showToast("💬 Update messengerLink (m.me/...)", 1500);
+        return;
+      }
+      openUrl(url, "Launching Messenger...");
+    }
+    
+    function triggerCall() {
+      let phone = CONFIG.callNumber;
+      if (!phone || phone === "+1234567890") {
+        showToast("📞 Set your callNumber (with country code)", 1500);
+        return;
+      }
+      let telLink = phone.startsWith('tel:') ? phone : `tel:${phone}`;
+      showToast("Initiating call...");
+      window.location.href = telLink;
+    }
+    
+    function triggerFacebook() {
+      let fb = CONFIG.facebookUrl;
+      if (!fb || fb === "https://facebook.com/yourprofile") {
+        showToast("📘 Set your Facebook profile URL", 1500);
+        return;
+      }
+      openUrl(fb, "Opening Facebook...");
+    }
+    
+    function triggerEmail() {
+      let email = CONFIG.emailAddress;
+      if (!email || email === "hello@example.com") {
+        showToast("✉️ Update emailAddress in config", 1500);
+        return;
+      }
+      let subject = encodeURIComponent(CONFIG.emailSubject);
+      window.location.href = `mailto:${email}?subject=${subject}`;
+      showToast("Opening email client", 1200);
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('whatsappBtn')?.addEventListener('click', triggerWhatsApp);
+      document.getElementById('messengerBtn')?.addEventListener('click', triggerMessenger);
+      document.getElementById('callBtn')?.addEventListener('click', triggerCall);
+      document.getElementById('facebookBtn')?.addEventListener('click', triggerFacebook);
+      document.getElementById('emailBtn')?.addEventListener('click', triggerEmail);
+    });
+  </script>
+</body>
+</html>

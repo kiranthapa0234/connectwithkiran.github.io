@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kiranthapa0234.github.io/connectwithkiran.github.io/sitemap.xml
